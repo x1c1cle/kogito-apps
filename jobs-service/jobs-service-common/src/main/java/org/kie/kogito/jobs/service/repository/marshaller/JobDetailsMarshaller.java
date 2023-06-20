@@ -17,6 +17,7 @@
 package org.kie.kogito.jobs.service.repository.marshaller;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -24,8 +25,8 @@ import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.kie.kogito.jobs.service.model.JobDetails;
 import org.kie.kogito.jobs.service.model.JobStatus;
-import org.kie.kogito.jobs.service.model.job.JobDetails;
 
 import io.quarkus.arc.DefaultBean;
 import io.vertx.core.json.JsonObject;
@@ -34,7 +35,7 @@ import static org.kie.kogito.jobs.service.utils.DateUtil.DEFAULT_ZONE;
 
 @DefaultBean
 @ApplicationScoped
-public class JobDetailsMarshaller {
+public class JobDetailsMarshaller implements Marshaller<JobDetails, JsonObject> {
 
     RecipientMarshaller recipientMarshaller;
 
@@ -49,6 +50,7 @@ public class JobDetailsMarshaller {
         this.triggerMarshaller = triggerMarshaller;
     }
 
+    @Override
     public JsonObject marshall(JobDetails jobDetails) {
         if (jobDetails != null) {
             return JsonObject.mapFrom(new JobDetailsAccessor(jobDetails, recipientMarshaller, triggerMarshaller));
@@ -56,6 +58,7 @@ public class JobDetailsMarshaller {
         return null;
     }
 
+    @Override
     public JobDetails unmarshall(JsonObject jsonObject) {
         if (jsonObject != null) {
             return jsonObject.mapTo(JobDetailsAccessor.class).to(recipientMarshaller, triggerMarshaller);
@@ -73,10 +76,10 @@ public class JobDetailsMarshaller {
         private Integer priority;
         private Integer executionCounter;
         private String scheduledId;
-        private Map<String, Object> payload;
         private Map<String, Object> recipient;
         private Map<String, Object> trigger;
-        private String type;
+        private Long executionTimeout;
+        private String executionTimeoutUnit;
 
         public JobDetailsAccessor() {
         }
@@ -90,10 +93,10 @@ public class JobDetailsMarshaller {
             this.priority = jobDetails.getPriority();
             this.executionCounter = jobDetails.getExecutionCounter();
             this.scheduledId = jobDetails.getScheduledId();
-            this.payload = Optional.ofNullable(jobDetails.getPayload()).map(p -> new JsonObject(p.toString()).getMap()).orElse(null);
             this.recipient = Optional.ofNullable(jobDetails.getRecipient()).map(r -> recipientMarshaller.marshall(r).getMap()).orElse(null);
             this.trigger = Optional.ofNullable(jobDetails.getTrigger()).map(t -> triggerMarshaller.marshall(t).getMap()).orElse(null);
-            this.type = Optional.ofNullable(jobDetails.getType()).map(Enum::name).orElse(null);
+            this.executionTimeout = jobDetails.getExecutionTimeout();
+            this.executionTimeoutUnit = Optional.ofNullable(jobDetails.getExecutionTimeoutUnit()).map(Enum::name).orElse(null);
         }
 
         public JobDetails to(RecipientMarshaller recipientMarshaller, TriggerMarshaller triggerMarshaller) {
@@ -105,11 +108,11 @@ public class JobDetailsMarshaller {
                     .retries(this.retries)
                     .executionCounter(this.executionCounter)
                     .scheduledId(this.scheduledId)
-                    .payload(Optional.ofNullable(this.payload).map(p -> new JsonObject(p).toString()).orElse(null))
-                    .type(Optional.ofNullable(this.type).map(JobDetails.Type::valueOf).orElse(null))
                     .priority(this.priority)
                     .recipient(Optional.ofNullable(this.recipient).map(r -> recipientMarshaller.unmarshall(new JsonObject(r))).orElse(null))
                     .trigger(Optional.ofNullable(this.trigger).map(t -> triggerMarshaller.unmarshall(new JsonObject(t))).orElse(null))
+                    .executionTimeout(this.executionTimeout)
+                    .executionTimeoutUnit(Optional.ofNullable(this.executionTimeoutUnit).map(ChronoUnit::valueOf).orElse(null))
                     .build();
         }
 
@@ -177,14 +180,6 @@ public class JobDetailsMarshaller {
             this.scheduledId = scheduledId;
         }
 
-        public Map<String, Object> getPayload() {
-            return payload;
-        }
-
-        public void setPayload(Map<String, Object> payload) {
-            this.payload = payload;
-        }
-
         public Map<String, Object> getRecipient() {
             return recipient;
         }
@@ -201,12 +196,20 @@ public class JobDetailsMarshaller {
             this.trigger = trigger;
         }
 
-        public String getType() {
-            return type;
+        public Long getExecutionTimeout() {
+            return executionTimeout;
         }
 
-        public void setType(String type) {
-            this.type = type;
+        public void setExecutionTimeout(Long executionTimeout) {
+            this.executionTimeout = executionTimeout;
+        }
+
+        public String getExecutionTimeoutUnit() {
+            return executionTimeoutUnit;
+        }
+
+        public void setExecutionTimeoutUnit(String executionTimeoutUnit) {
+            this.executionTimeoutUnit = executionTimeoutUnit;
         }
     }
 }

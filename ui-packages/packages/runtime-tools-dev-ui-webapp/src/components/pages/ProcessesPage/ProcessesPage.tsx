@@ -41,12 +41,9 @@ interface MatchProps {
   instanceID: string;
 }
 
-const ProcessesPage: React.FC<RouteComponentProps<
-  MatchProps,
-  StaticContext,
-  H.LocationState
-> &
-  OUIAProps> = ({ ouiaId, ouiaSafe, ...props }) => {
+const ProcessesPage: React.FC<
+  RouteComponentProps<MatchProps, StaticContext, H.LocationState> & OUIAProps
+> = ({ ouiaId, ouiaSafe, ...props }) => {
   const apiContext = useDevUIAppContext();
 
   const [activeTabKey, setActiveTabKey] = useState<ReactText>(0);
@@ -122,11 +119,7 @@ const ProcessesPage: React.FC<RouteComponentProps<
               )}
             >
               <Card className="Dev-ui__card-size">
-                <ProcessDefinitionListContainer
-                  singularProcessLabel={
-                    apiContext.customLabels.singularProcessLabel
-                  }
-                />
+                <ProcessDefinitionListContainer />
               </Card>
             </PageSection>
           </Tab>

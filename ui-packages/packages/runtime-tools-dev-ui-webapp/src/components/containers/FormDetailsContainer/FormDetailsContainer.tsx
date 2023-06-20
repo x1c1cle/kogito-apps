@@ -21,6 +21,7 @@ import { useFormDetailsGatewayApi } from '../../../channel/FormDetails/FormDetai
 import { EmbeddedFormDetails, FormContent } from '@kogito-apps/form-details';
 import { FormInfo } from '@kogito-apps/forms-list';
 import { Form } from '@kogito-apps/form-displayer';
+import { useDevUIAppContext } from '../../contexts/DevUIAppContext';
 
 interface FormDetailsContainerProps {
   formData: FormInfo;
@@ -35,19 +36,20 @@ const FormDetailsContainer: React.FC<FormDetailsContainerProps & OUIAProps> = ({
   ouiaSafe
 }) => {
   const gatewayApi: FormDetailsGatewayApi = useFormDetailsGatewayApi();
+  const appContext = useDevUIAppContext();
 
   return (
     <EmbeddedFormDetails
       {...componentOuiaProps(ouiaId, 'form-details-container', ouiaSafe)}
       driver={{
-        getFormContent: function(formName: string): Promise<Form> {
+        getFormContent: function (formName: string): Promise<Form> {
           return gatewayApi.getFormContent(formName);
         },
         saveFormContent(formName: string, content: FormContent): void {
           gatewayApi
             .saveFormContent(formName, content)
-            .then(value => onSuccess())
-            .catch(error => {
+            .then((value) => onSuccess())
+            .catch((error) => {
               const message = error.response
                 ? error.response.data
                 : error.message;
@@ -55,7 +57,7 @@ const FormDetailsContainer: React.FC<FormDetailsContainerProps & OUIAProps> = ({
             });
         }
       }}
-      targetOrigin={'*'}
+      targetOrigin={appContext.getDevUIUrl()}
       formData={formData}
     />
   );

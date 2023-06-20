@@ -39,31 +39,30 @@ export const ProcessDetailsEnvelopeView = React.forwardRef<
   ProcessDetailsEnvelopeViewApi,
   Props
 >((props, forwardedRef) => {
-  const [
-    isEnvelopeConnectedToChannel,
-    setEnvelopeConnectedToChannel
-  ] = useState<boolean>(false);
+  const [isEnvelopeConnectedToChannel, setEnvelopeConnectedToChannel] =
+    useState<boolean>(false);
   const [processInstance, setProcessInstance] = useState<ProcessInstance>(
     {} as ProcessInstance
   );
-  const [
-    omittedProcessTimelineEvents,
-    setOmittedProcessTimelineEvents
-  ] = useState<string[]>([]);
-  const [diagramPreviewSize, setDiagramPreviewSize] = useState<
-    DiagramPreviewSize
-  >();
+  const [omittedProcessTimelineEvents, setOmittedProcessTimelineEvents] =
+    useState<string[]>([]);
+  const [diagramPreviewSize, setDiagramPreviewSize] =
+    useState<DiagramPreviewSize>();
   const [showSwfDiagram, setShowSwfDiagram] = useState<boolean>(false);
   const [isStunnerEnabled, setIsStunnerEnabled] = useState<boolean>(false);
+  const [singularProcessLabel, setSingularProcessLabel] = useState<string>('');
+  const [pluralProcessLabel, setPluralProcessLabel] = useState<string>('');
   useImperativeHandle(
     forwardedRef,
     () => ({
-      initialize: initArgs => {
+      initialize: (initArgs) => {
         setProcessInstance(initArgs.processInstance);
         setOmittedProcessTimelineEvents(initArgs.omittedProcessTimelineEvents);
         setDiagramPreviewSize(initArgs.diagramPreviewSize);
         setShowSwfDiagram(initArgs.showSwfDiagram);
         setIsStunnerEnabled(initArgs.isStunnerEnabled);
+        setSingularProcessLabel(initArgs.singularProcessLabel);
+        setPluralProcessLabel(initArgs.pluralProcessLabel);
         setEnvelopeConnectedToChannel(true);
       }
     }),
@@ -80,6 +79,8 @@ export const ProcessDetailsEnvelopeView = React.forwardRef<
         diagramPreviewSize={diagramPreviewSize}
         showSwfDiagram={showSwfDiagram}
         isStunnerEnabled={isStunnerEnabled}
+        singularProcessLabel={singularProcessLabel}
+        pluralProcessLabel={pluralProcessLabel}
       />
     </React.Fragment>
   );

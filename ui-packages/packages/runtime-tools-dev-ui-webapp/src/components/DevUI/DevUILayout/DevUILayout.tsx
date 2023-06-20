@@ -36,6 +36,7 @@ import { DiagramPreviewSize } from '@kogito-apps/process-details/dist/api';
 import WorkflowFormContextProvider from '../../../channel/WorkflowForm/WorkflowFormContextProvider';
 import CustomDashboardListContextProvider from '../../../channel/CustomDashboardList/CustomDashboardListContextProvider';
 import { CustomDashboardViewContextProvider } from '../../../channel/CustomDashboardView';
+import CloudEventFormContextProvider from '../../../channel/CloudEventForm/CloudEventFormContextProvider';
 
 interface IOwnProps {
   apolloClient: ApolloClient<any>;
@@ -104,11 +105,13 @@ const DevUILayout: React.FC<IOwnProps> = ({
                           <FormDetailsContextProvider>
                             <ProcessFormContextProvider>
                               <WorkflowFormContextProvider>
-                                <MemoryRouter>
-                                  <Switch>
-                                    <Route path="/" render={renderPage} />
-                                  </Switch>
-                                </MemoryRouter>
+                                <CloudEventFormContextProvider>
+                                  <MemoryRouter>
+                                    <Switch>
+                                      <Route path="/" render={renderPage} />
+                                    </Switch>
+                                  </MemoryRouter>
+                                </CloudEventFormContextProvider>
                               </WorkflowFormContextProvider>
                             </ProcessFormContextProvider>
                           </FormDetailsContextProvider>

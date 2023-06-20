@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   DataTable,
   DataTableColumn,
@@ -35,13 +35,16 @@ export interface ProcessDefinitionListProps {
   isEnvelopeConnectedToChannel: boolean;
   driver: ProcessDefinitionListDriver;
   singularProcessLabel: string;
+  isTriggerCloudEventEnabled?: boolean;
 }
 
-const ProcessDefinitionList: React.FC<ProcessDefinitionListProps &
-  OUIAProps> = ({
+const ProcessDefinitionList: React.FC<
+  ProcessDefinitionListProps & OUIAProps
+> = ({
   isEnvelopeConnectedToChannel,
   driver,
   singularProcessLabel,
+  isTriggerCloudEventEnabled = false,
   ouiaId,
   ouiaSafe
 }) => {
@@ -77,7 +80,7 @@ const ProcessDefinitionList: React.FC<ProcessDefinitionListProps &
   const columns: DataTableColumn[] = [
     getColumn('processName', `${singularProcessLabel} Name`),
     getColumn('endpoint', 'Endpoint'),
-    getActionColumn(processDefinition => {
+    getActionColumn((processDefinition) => {
       driver.openProcessForm(processDefinition);
     }, singularProcessLabel)
   ];
@@ -86,11 +89,17 @@ const ProcessDefinitionList: React.FC<ProcessDefinitionListProps &
     await driver.setProcessDefinitionFilter(filterProcessNames);
   };
 
+  const onOpenTriggerCloudEvent = useCallback(() => {
+    if (isTriggerCloudEventEnabled) {
+      driver.openTriggerCloudEvent();
+    }
+  }, [isTriggerCloudEventEnabled]);
+
   const filterProcessDefinition = (): ProcessDefinition[] => {
     if (filterProcessNames.length === 0) {
       return processDefinitionList;
     }
-    return processDefinitionList.filter(pd =>
+    return processDefinitionList.filter((pd) =>
       filterProcessNames.includes(pd.processName)
     );
   };
@@ -121,6 +130,9 @@ const ProcessDefinitionList: React.FC<ProcessDefinitionListProps &
         setFilterProcessNames={setFilterProcessNames}
         applyFilter={applyFilter}
         singularProcessLabel={singularProcessLabel}
+        onOpenTriggerCloudEvent={
+          isTriggerCloudEventEnabled ? onOpenTriggerCloudEvent : undefined
+        }
       />
       <Divider />
       <DataTable

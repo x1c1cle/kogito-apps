@@ -65,6 +65,10 @@
           <groupId>ch.qos.logback</groupId>
           <artifactId>logback-classic</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>io.rest-assured</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -123,6 +127,9 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <skip>${skip.springboot}</skip>
+          <systemPropertyVariables>
+            <container.image.jobs-service>org.kie.kogito/jobs-service-common:${project.version}</container.image.jobs-service>
+          </systemPropertyVariables>
         </configuration>
         <executions>
           <execution>

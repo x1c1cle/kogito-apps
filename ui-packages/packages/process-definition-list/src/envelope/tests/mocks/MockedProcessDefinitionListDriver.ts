@@ -17,7 +17,8 @@
 import { ProcessDefinition, ProcessDefinitionListDriver } from '../../../api';
 
 export class MockedProcessDefinitionListDriver
-  implements ProcessDefinitionListDriver {
+  implements ProcessDefinitionListDriver
+{
   setProcessDefinitionFilter(filter: any) {
     return Promise.resolve();
   }
@@ -42,5 +43,7 @@ export class MockedProcessDefinitionListDriver
   }
   openProcessForm(processDefinition: ProcessDefinition): Promise<void> {
     return Promise.resolve();
+  }
+  openTriggerCloudEvent(): void {
   }
 }

@@ -8,7 +8,7 @@ pipelineProperties = [:]
 
 pipeline {
     agent {
-        label 'kie-rhel7 && !built-in'
+        label 'kie-rhel8 && docker && !built-in'
     }
 
     tools {
@@ -31,6 +31,8 @@ pipeline {
         KOGITO_CI_EMAIL_TO = credentials("${JENKINS_EMAIL_CREDS_ID}")
 
         BOT_BRANCH_HASH = "${util.generateHash(10)}"
+
+        NODE_OPTIONS = '--max_old_space_size=4096'
     }
 
     stages {
@@ -51,6 +53,8 @@ pipeline {
 
                         assert getBuildBranch() == util.getReleaseBranchFromVersion(getProjectVersion())
                     }
+
+                    setupCypressEnv('9.7.0')
                 }
             }
         }
@@ -64,6 +68,11 @@ pipeline {
                         checkoutRepo()
                         mergeAndPush(getDeployPrLink())
                         tagLatest()
+                        if(githubscm.isReleaseExist(getGitTag(), getGitAuthorCredsID())) {
+                            githubscm.deleteRelease(getGitTag(), getGitAuthorCredsID())
+                        }
+                        githubscm.createReleaseWithGeneratedReleaseNotes(getGitTag(), getBuildBranch(), githubscm.getPreviousTag(getGitTag()), getGitAuthorCredsID())
+                        githubscm.updateReleaseBody(getGitTag(), getGitAuthorCredsID())
                     }
                 }
             }
@@ -112,6 +121,12 @@ void sendNotification() {
         mailer.sendMarkdownTestSummaryNotification('Promote', "[${getBuildBranch()}] Kogito Apps", [env.KOGITO_CI_EMAIL_TO])
     } else {
         echo 'No notification sent per configuration'
+    }
+}
+
+void setupCypressEnv(String cypressVersion) {
+    if (env.CYPRESS_BINARY_URL) {
+        env.CYPRESS_INSTALL_BINARY = "${CYPRESS_BINARY_URL}/cypress-${cypressVersion}.zip"
     }
 }
 

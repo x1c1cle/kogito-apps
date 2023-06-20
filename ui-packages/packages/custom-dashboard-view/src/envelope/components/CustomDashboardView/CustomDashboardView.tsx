@@ -24,6 +24,7 @@ export interface CustomDashboardViewProps {
   isEnvelopeConnectedToChannel: boolean;
   driver: CustomDashboardViewDriver;
   customDashboardName: string;
+  targetOrigin: string;
 }
 
 const CustomDashboardView: React.FC<CustomDashboardViewProps & OUIAProps> = ({
@@ -31,6 +32,7 @@ const CustomDashboardView: React.FC<CustomDashboardViewProps & OUIAProps> = ({
   driver,
   ouiaId,
   customDashboardName,
+  targetOrigin,
   ouiaSafe
 }) => {
   const ref = useRef(null);
@@ -40,13 +42,16 @@ const CustomDashboardView: React.FC<CustomDashboardViewProps & OUIAProps> = ({
   const [isReady, setReady] = useState<boolean>(false);
   driver
     .getCustomDashboardContent(customDashboardName)
-    .then(value => setDashboardContent(value))
-    .catch(error => {
+    .then((value) => setDashboardContent(value))
+    .catch((error) => {
       setError(true);
       setErrorMessage(error.message);
     });
 
-  window.addEventListener('message', e => {
+  window.addEventListener('message', (e) => {
+    if (e.origin !== targetOrigin) {
+      return;
+    }
     if (e.data == 'ready') {
       setReady(true);
     }

@@ -28,8 +28,8 @@ import javax.interceptor.Interceptor;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.reactive.streams.operators.PublisherBuilder;
 import org.kie.kogito.jobs.service.management.MessagingChangeEvent;
+import org.kie.kogito.jobs.service.model.JobDetails;
 import org.kie.kogito.jobs.service.model.JobStatus;
-import org.kie.kogito.jobs.service.model.job.JobDetails;
 import org.kie.kogito.jobs.service.repository.ReactiveJobRepository;
 import org.kie.kogito.jobs.service.scheduler.impl.TimerDelegateJobScheduler;
 import org.kie.kogito.jobs.service.utils.DateUtil;
@@ -49,20 +49,20 @@ public class JobSchedulerManager {
      * The current chunk size in minutes the scheduler handles, it is used to keep a limit number of jobs scheduled
      * in the in-memory scheduler.
      */
-    @ConfigProperty(name = "kogito.jobs-service.schedulerChunkInMinutes")
+    @ConfigProperty(name = "kogito.jobs-service.schedulerChunkInMinutes", defaultValue = "10")
     long schedulerChunkInMinutes;
 
     /**
      * The interval the job loading method runs to fetch the persisted jobs from the repository.
      */
-    @ConfigProperty(name = "kogito.jobs-service.loadJobIntervalInMinutes")
+    @ConfigProperty(name = "kogito.jobs-service.loadJobIntervalInMinutes", defaultValue = "10")
     long loadJobIntervalInMinutes;
 
     /**
      * The interval based on the current time the job loading method uses to fetch jobs "FROM (now -
      * {@link #loadJobFromCurrentTimeIntervalInMinutes}) TO {@link #schedulerChunkInMinutes}"
      */
-    @ConfigProperty(name = "kogito.jobs-service.loadJobFromCurrentTimeIntervalInMinutes")
+    @ConfigProperty(name = "kogito.jobs-service.loadJobFromCurrentTimeIntervalInMinutes", defaultValue = "0")
     long loadJobFromCurrentTimeIntervalInMinutes;
 
     @Inject

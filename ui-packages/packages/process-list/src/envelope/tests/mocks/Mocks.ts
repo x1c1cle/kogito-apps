@@ -16,6 +16,7 @@
 
 import {
   MessageBusClientApi,
+  NotificationPropertyNames,
   RequestPropertyNames
 } from '@kogito-tooling/envelope-bus/dist/api';
 import { ProcessListChannelApi, ProcessListEnvelopeApi } from '../../../api';
@@ -79,12 +80,19 @@ export const MockedApiRequests = jest.fn<
   processList__getChildProcessesQuery: jest.fn()
 }));
 
+export const MockedApiNotifications = jest.fn<
+  Pick<ProcessListChannelApi, NotificationPropertyNames<ProcessListChannelApi>>,
+  []
+>(() => ({
+  processList__openTriggerCloudEvent: jest.fn()
+}));
+
 export const MockedMessageBusClientApi = jest.fn<
   MessageBusClientApi<ProcessListChannelApi>,
   []
 >(() => ({
   requests: new MockedApiRequests(),
-  notifications: jest.fn(),
+  notifications: new MockedApiNotifications(),
   subscribe: jest.fn(),
   unsubscribe: jest.fn()
 }));
@@ -139,10 +147,11 @@ export const MockedEnvelopeBusControllerDefinition = jest.fn<
   receive: jest.fn()
 }));
 
-export const MockedEnvelopeBusController = new MockedEnvelopeBusControllerDefinition() as EnvelopeBusController<
-  ProcessListEnvelopeApi,
-  ProcessListChannelApi
->;
+export const MockedEnvelopeBusController =
+  new MockedEnvelopeBusControllerDefinition() as EnvelopeBusController<
+    ProcessListEnvelopeApi,
+    ProcessListChannelApi
+  >;
 
 export const MockedProcessListEnvelopeViewApi = jest.fn<
   ProcessListEnvelopeViewApi,

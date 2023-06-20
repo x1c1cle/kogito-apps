@@ -8,15 +8,19 @@
 * https://github.com/kiegroup/kogito-pipelines/tree/main/dsl/seed/src/main/groovy/org/kie/jenkins/jobdsl.
 */
 
-import org.kie.jenkins.jobdsl.model.Folder
+import org.kie.jenkins.jobdsl.model.JenkinsFolder
+import org.kie.jenkins.jobdsl.model.JobType
+import org.kie.jenkins.jobdsl.utils.EnvUtils
+import org.kie.jenkins.jobdsl.utils.JobParamsUtils
 import org.kie.jenkins.jobdsl.KogitoJobTemplate
 import org.kie.jenkins.jobdsl.KogitoJobUtils
 import org.kie.jenkins.jobdsl.Utils
 
 jenkins_path = '.ci/jenkins'
 
-Map getMultijobPRConfig(Folder jobFolder) {
-    return [
+Map getMultijobPRConfig(JenkinsFolder jobFolder) {
+    String defaultBuildMvnOptsCurrent = jobFolder.getDefaultEnvVarValue('BUILD_MVN_OPTS_CURRENT') ?: ''
+    def jobConfig = [
         parallel: true,
         buildchain: true,
         jobs : [
@@ -24,50 +28,82 @@ Map getMultijobPRConfig(Folder jobFolder) {
                 id: 'kogito-apps',
                 primary: true,
                 env : [
+                    NODE_OPTIONS: '--max_old_space_size=4096',
                     // Sonarcloud analysis only on main branch
                     // As we have only Community edition
-                    DISABLE_SONARCLOUD: !Utils.isMainBranch(this),
-                    ADDITIONAL_TIMEOUT: jobFolder.isNative() || jobFolder.isMandrel() ? '360' : '210',
+                    ENABLE_SONARCLOUD: EnvUtils.isDefaultEnvironment(this, jobFolder.getEnvironmentName()) && Utils.isMainBranch(this),
+                    BUILD_MVN_OPTS_CURRENT: "${defaultBuildMvnOptsCurrent} ${jobFolder.getEnvironmentName() ? '' : '-Dvalidate-formatting'}", // Validate formatting only for default env
                 ]
             ], [
-                id: 'kogito-examples',
-                dependsOn: 'kogito-apps',
+                id: 'kogito-quarkus-examples',
                 repository: 'kogito-examples',
+                dependsOn: 'kogito-apps',
                 env : [
-                    BUILD_MVN_OPTS_CURRENT: jobFolder.isQuarkusLTS() ? '' : jobFolder.isNative() || jobFolder.isMandrel() ? '-Pkogito-apps-downstream-native' : '-Pkogito-apps-downstream'
-                ]
+                    KOGITO_EXAMPLES_SUBFOLDER_POM: 'kogito-quarkus-examples/',
+                    BUILD_MVN_OPTS_CURRENT: "${defaultBuildMvnOptsCurrent} ${isProdEnv(jobFolder) ? '' : (isNative(jobFolder) ? '-Pkogito-apps-downstream-native' : '-Pkogito-apps-downstream')}"
+                ],
+            ], [
+                id: 'kogito-springboot-examples',
+                repository: 'kogito-examples',
+                dependsOn: 'kogito-apps',
+                env : [
+                    KOGITO_EXAMPLES_SUBFOLDER_POM: 'kogito-springboot-examples/',
+                    BUILD_MVN_OPTS_CURRENT: "${defaultBuildMvnOptsCurrent} ${isProdEnv(jobFolder) ? '' : (isNative(jobFolder) ? '-Pkogito-apps-downstream-native' : '-Pkogito-apps-downstream')}"
+                ],
+            ], [
+                id: 'serverless-workflow-examples',
+                repository: 'kogito-examples',
+                dependsOn: 'kogito-apps',
+                env : [
+                    KOGITO_EXAMPLES_SUBFOLDER_POM: 'serverless-workflow-examples/',
+                    BUILD_MVN_OPTS_CURRENT: "${defaultBuildMvnOptsCurrent} ${isProdEnv(jobFolder) ? '' : (isNative(jobFolder) ? '-Pkogito-apps-downstream-native' : '-Pkogito-apps-downstream')}"
+                ],
             ]
         ]
     ]
+
+    // For Quarkus 3, run only runtimes PR check... for now
+    if (EnvUtils.hasEnvironmentId(this, jobFolder.getEnvironmentName(), 'quarkus3')) {
+        jobConfig.jobs.retainAll { it.id == 'kogito-apps' }
+    }
+
+    return jobConfig
 }
 
-setupDeployJob(Folder.PULLREQUEST_RUNTIMES_BDD)
-setupSonarCloudJob()
+boolean isProdEnv(JenkinsFolder jobFolder) {
+    return EnvUtils.hasEnvironmentId(this, jobFolder.getEnvironmentName(), 'prod')
+}
+
+boolean isNative(JenkinsFolder jobFolder) {
+    return EnvUtils.hasEnvironmentId(this, jobFolder.getEnvironmentName(), 'native')
+}
+
+setupDeployJob(JobType.PULL_REQUEST, 'kogito-bdd')
 
 // PR checks
-KogitoJobUtils.createAllEnvsPerRepoPRJobs(this) { jobFolder -> getMultijobPRConfig(jobFolder) }
+KogitoJobUtils.createAllEnvironmentsPerRepoPRJobs(this) { jobFolder -> getMultijobPRConfig(jobFolder) }
 
 // Init branch
 createSetupBranchJob()
 
 // Nightly jobs
-setupDeployJob(Folder.NIGHTLY)
-setupSpecificNightlyJob(Folder.NIGHTLY_NATIVE)
+Closure addNodeOptionsEnvJobParamsGetter = { script ->
+    def jobParams = JobParamsUtils.DEFAULT_PARAMS_GETTER(script)
+    jobParams.env.put('NODE_OPTIONS', '--max_old_space_size=4096')
+    return jobParams
+}
 
-setupSpecificNightlyJob(Folder.NIGHTLY_QUARKUS_MAIN)
-setupSpecificNightlyJob(Folder.NIGHTLY_QUARKUS_BRANCH)
-
-setupSpecificNightlyJob(Folder.NIGHTLY_MANDREL)
-setupSpecificNightlyJob(Folder.NIGHTLY_MANDREL_LTS)
-setupSpecificNightlyJob(Folder.NIGHTLY_QUARKUS_LTS)
-
-// Jobs with integration branch
-setupSpecificNightlyJob(Folder.NIGHTLY_QUARKUS_MAIN, true)
-setupSpecificNightlyJob(Folder.NIGHTLY_QUARKUS_LTS, true)
+KogitoJobUtils.createNightlyBuildChainBuildAndDeployJobForCurrentRepo(this, '', true, addNodeOptionsEnvJobParamsGetter)
+setupSpecificBuildChainNightlyJob('sonarcloud', addNodeOptionsEnvJobParamsGetter)
+setupSpecificBuildChainNightlyJob('native', addNodeOptionsEnvJobParamsGetter)
+setupNightlyQuarkusIntegrationJob('quarkus-main', addNodeOptionsEnvJobParamsGetter)
+setupNightlyQuarkusIntegrationJob('quarkus-branch', addNodeOptionsEnvJobParamsGetter)
+setupNightlyQuarkusIntegrationJob('quarkus-lts', addNodeOptionsEnvJobParamsGetter)
+setupNightlyQuarkusIntegrationJob('native-lts', addNodeOptionsEnvJobParamsGetter)
 
 // Release jobs
-setupDeployJob(Folder.RELEASE)
-setupPromoteJob(Folder.RELEASE)
+setupDeployJob(JobType.RELEASE)
+setupPromoteJob(JobType.RELEASE)
 
 // Update Optaplanner tools job
 KogitoJobUtils.createVersionUpdateToolsJob(this, 'kogito-apps', 'Optaplanner', [
@@ -79,48 +115,27 @@ if (Utils.isMainBranch(this)) {
     setupOptaplannerJob('main')
 }
 
+// Quarkus 3
+if (EnvUtils.isEnvironmentEnabled(this, 'quarkus-3')) {
+    setupPrQuarkus3RewriteJob()
+    setupStandaloneQuarkus3RewriteJob()
+}
+
 /////////////////////////////////////////////////////////////////
 // Methods
 /////////////////////////////////////////////////////////////////
 
-void setupSpecificNightlyJob(Folder specificNightlyFolder, boolean useIntegrationBranch = false) {
-    String envName = specificNightlyFolder.environment.toName()
-    def jobParams = KogitoJobUtils.getBasicJobParams(this, "kogito-apps${useIntegrationBranch ? '-integration-branch' : ''}", specificNightlyFolder, "${jenkins_path}/Jenkinsfile.specific_nightly", "Kogito Apps Nightly ${envName}")
-    KogitoJobUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
-    jobParams.triggers = [ cron : '@midnight' ]
-    jobParams.env.putAll([
-        JENKINS_EMAIL_CREDS_ID: "${JENKINS_EMAIL_CREDS_ID}",
-        NOTIFICATION_JOB_NAME: "${envName} check",
-        USE_INTEGRATION_BRANCH : useIntegrationBranch,
-    ])
-    KogitoJobTemplate.createPipelineJob(this, jobParams)?.with {
-        parameters {
-            stringParam('BUILD_BRANCH_NAME', "${GIT_BRANCH}", 'Set the Git branch to checkout')
-            stringParam('GIT_AUTHOR', "${GIT_AUTHOR_NAME}", 'Set the Git author to checkout')
-            stringParam('GIT_AUTHOR_CREDS_ID', "${GIT_AUTHOR_CREDENTIALS_ID}", 'Set the Git author creds id')
-        }
-    }
+void setupNightlyQuarkusIntegrationJob(String envName, Closure defaultJobParamsGetter = JobParamsUtils.DEFAULT_PARAMS_GETTER) {
+    KogitoJobUtils.createNightlyBuildChainIntegrationJob(this, envName, Utils.getRepoName(this), true, defaultJobParamsGetter)
 }
 
-void setupSonarCloudJob() {
-    def jobParams = KogitoJobUtils.getBasicJobParams(this, 'kogito-apps', Folder.NIGHTLY_SONARCLOUD, "${jenkins_path}/Jenkinsfile.sonarcloud", 'Kogito Apps Daily Sonar')
-    KogitoJobUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
-    jobParams.triggers = [ cron : 'H 20 * * 1-5' ]
-    jobParams.env.putAll([
-        JENKINS_EMAIL_CREDS_ID: "${JENKINS_EMAIL_CREDS_ID}",
-        NOTIFICATION_JOB_NAME: 'Sonarcloud check',
-    ])
-    KogitoJobTemplate.createPipelineJob(this, jobParams)?.with {
-        parameters {
-            stringParam('BUILD_BRANCH_NAME', "${GIT_BRANCH}", 'Set the Git branch to checkout')
-            stringParam('GIT_AUTHOR', "${GIT_AUTHOR_NAME}", 'Set the Git author to checkout')
-        }
-    }
+void setupSpecificBuildChainNightlyJob(String envName, Closure defaultJobParamsGetter = JobParamsUtils.DEFAULT_PARAMS_GETTER) {
+    KogitoJobUtils.createNightlyBuildChainBuildAndTestJobForCurrentRepo(this, envName, true, defaultJobParamsGetter)
 }
 
 void setupOptaplannerJob(String optaplannerBranch) {
-    def jobParams = KogitoJobUtils.getBasicJobParams(this, 'kogito-apps-optaplanner-snapshot', Folder.NIGHTLY_ECOSYSTEM, "${jenkins_path}/Jenkinsfile.optaplanner", 'Kogito Apps Testing against Optaplanner snapshot')
-    KogitoJobUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
+    def jobParams = JobParamsUtils.getBasicJobParamsWithEnv(this, 'kogito-apps-optaplanner-snapshot', JobType.NIGHTLY, 'ecosystem', "${jenkins_path}/Jenkinsfile.optaplanner", 'Kogito Apps Testing against Optaplanner snapshot')
+    JobParamsUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
     jobParams.triggers = [ cron : 'H 6 * * *' ]
     jobParams.env.putAll([
         JENKINS_EMAIL_CREDS_ID: "${JENKINS_EMAIL_CREDS_ID}",
@@ -137,8 +152,8 @@ void setupOptaplannerJob(String optaplannerBranch) {
 }
 
 void createSetupBranchJob() {
-    def jobParams = KogitoJobUtils.getBasicJobParams(this, 'kogito-apps', Folder.SETUP_BRANCH, "${jenkins_path}/Jenkinsfile.setup-branch", 'Kogito Apps Init branch')
-    KogitoJobUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
+    def jobParams = JobParamsUtils.getBasicJobParams(this, 'kogito-apps', JobType.SETUP_BRANCH, "${jenkins_path}/Jenkinsfile.setup-branch", 'Kogito Apps Init branch')
+    JobParamsUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
     jobParams.env.putAll([
         REPO_NAME: 'kogito-apps',
         JENKINS_EMAIL_CREDS_ID: "${JENKINS_EMAIL_CREDS_ID}",
@@ -147,8 +162,6 @@ void createSetupBranchJob() {
         AUTHOR_CREDS_ID: "${GIT_AUTHOR_CREDENTIALS_ID}",
 
         MAVEN_SETTINGS_CONFIG_FILE_ID: "${MAVEN_SETTINGS_FILE_ID}",
-        MAVEN_DEPENDENCIES_REPOSITORY: "${MAVEN_ARTIFACTS_REPOSITORY}",
-        MAVEN_DEPLOY_REPOSITORY: "${MAVEN_ARTIFACTS_REPOSITORY}",
 
         IS_MAIN_BRANCH: "${Utils.isMainBranch(this)}"
     ])
@@ -165,10 +178,10 @@ void createSetupBranchJob() {
     }
 }
 
-void setupDeployJob(Folder jobFolder) {
-    def jobParams = KogitoJobUtils.getBasicJobParams(this, 'kogito-apps-deploy', jobFolder, "${jenkins_path}/Jenkinsfile.deploy", 'Kogito Apps Deploy')
-    KogitoJobUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
-    if (jobFolder.isPullRequest()) {
+void setupDeployJob(JobType jobType, String envName = '') {
+    def jobParams = JobParamsUtils.getBasicJobParamsWithEnv(this, 'kogito-apps-deploy', jobType, envName, "${jenkins_path}/Jenkinsfile.deploy", 'Kogito Apps Deploy')
+    JobParamsUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
+    if (jobType == JobType.PULL_REQUEST) {
         jobParams.git.branch = '${BUILD_BRANCH_NAME}'
         jobParams.git.author = '${GIT_AUTHOR}'
         jobParams.git.project_url = Utils.createProjectUrl("${GIT_AUTHOR_NAME}", jobParams.git.repository)
@@ -178,7 +191,7 @@ void setupDeployJob(Folder jobFolder) {
         JENKINS_EMAIL_CREDS_ID: "${JENKINS_EMAIL_CREDS_ID}",
         MAVEN_SETTINGS_CONFIG_FILE_ID: "${MAVEN_SETTINGS_FILE_ID}",
     ])
-    if (jobFolder.isPullRequest()) {
+    if (jobType == JobType.PULL_REQUEST) {
         jobParams.env.putAll([
             MAVEN_DEPENDENCIES_REPOSITORY: "${MAVEN_PR_CHECKS_REPOSITORY_URL}",
             MAVEN_DEPLOY_REPOSITORY: "${MAVEN_PR_CHECKS_REPOSITORY_URL}",
@@ -196,7 +209,7 @@ void setupDeployJob(Folder jobFolder) {
             MAVEN_DEPENDENCIES_REPOSITORY: "${MAVEN_ARTIFACTS_REPOSITORY}",
             MAVEN_DEPLOY_REPOSITORY: "${MAVEN_ARTIFACTS_REPOSITORY}",
         ])
-        if (jobFolder.isRelease()) {
+        if (jobType == JobType.RELEASE) {
             jobParams.env.putAll([
                 NEXUS_RELEASE_URL: "${MAVEN_NEXUS_RELEASE_URL}",
                 NEXUS_RELEASE_REPOSITORY_ID: "${MAVEN_NEXUS_RELEASE_REPOSITORY}",
@@ -210,7 +223,7 @@ void setupDeployJob(Folder jobFolder) {
             stringParam('DISPLAY_NAME', '', 'Setup a specific build display name')
 
             stringParam('BUILD_BRANCH_NAME', "${GIT_BRANCH}", 'Set the Git branch to checkout')
-            if (jobFolder.isPullRequest()) {
+            if (jobType == JobType.PULL_REQUEST) {
                 // author can be changed as param only for PR behavior, due to source branch/target, else it is considered as an env
                 stringParam('GIT_AUTHOR', "${GIT_AUTHOR_NAME}", 'Set the Git author to checkout')
             }
@@ -225,9 +238,9 @@ void setupDeployJob(Folder jobFolder) {
     }
 }
 
-void setupPromoteJob(Folder jobFolder) {
-    def jobParams = KogitoJobUtils.getBasicJobParams(this, 'kogito-apps-promote', jobFolder, "${jenkins_path}/Jenkinsfile.promote", 'Kogito Apps Promote')
-    KogitoJobUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
+void setupPromoteJob(JobType jobType) {
+    def jobParams = JobParamsUtils.getBasicJobParams(this, 'kogito-apps-promote', jobType, "${jenkins_path}/Jenkinsfile.promote", 'Kogito Apps Promote')
+    JobParamsUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
     jobParams.env.putAll([
         REPO_NAME: 'kogito-apps',
         PROPERTIES_FILE_NAME: 'deployment.properties',
@@ -258,6 +271,47 @@ void setupPromoteJob(Folder jobFolder) {
             stringParam('PROJECT_VERSION', '', 'Override `deployment.properties`. Optional if not RELEASE. If RELEASE, cannot be empty.')
             stringParam('GIT_TAG', '', 'Git tag to set, if different from PROJECT_VERSION')
 
+            booleanParam('SEND_NOTIFICATION', false, 'In case you want the pipeline to send a notification on CI channel for this run.')
+        }
+    }
+}
+
+void setupPrQuarkus3RewriteJob() {
+    def jobParams = JobParamsUtils.getBasicJobParamsWithEnv(this, 'kogito-apps.rewrite', JobType.PULL_REQUEST, 'quarkus-3', "${jenkins_path}/Jenkinsfile.quarkus-3.rewrite.pr", 'Kogito Apps Quarkus 3 rewrite patch regeneration')
+    JobParamsUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
+    jobParams.jenkinsfile = "${jenkins_path}/Jenkinsfile.quarkus-3.rewrite.pr"
+    jobParams.pr.putAll([
+        run_only_for_branches: [ "${GIT_BRANCH}" ],
+        disable_status_message_error: true,
+        disable_status_message_failure: true,
+        trigger_phrase: '.*[j|J]enkins,?.*(rewrite|write) [Q|q]uarkus-3.*',
+        trigger_phrase_only: true,
+        commitContext: 'Quarkus 3 rewrite',
+    ])
+    jobParams.env.putAll([
+        AUTHOR_CREDS_ID: "${GIT_AUTHOR_CREDENTIALS_ID}",
+        MAVEN_SETTINGS_CONFIG_FILE_ID: "${MAVEN_SETTINGS_FILE_ID}",
+    ])
+    KogitoJobTemplate.createPRJob(this, jobParams)
+}
+
+void setupStandaloneQuarkus3RewriteJob() {
+    def jobParams = JobParamsUtils.getBasicJobParams(this, 'kogito-apps.quarkus-3.rewrite', JobType.TOOLS, "${jenkins_path}/Jenkinsfile.quarkus-3.rewrite.standalone", 'Kogito Apps Quarkus 3 rewrite patch regeneration')
+    jobParams.env.putAll(EnvUtils.getEnvironmentEnvVars(this, 'quarkus-3'))
+    JobParamsUtils.setupJobParamsDefaultMavenConfiguration(this, jobParams)
+    jobParams.env.putAll([
+        AUTHOR_CREDS_ID: "${GIT_AUTHOR_CREDENTIALS_ID}",
+        JENKINS_EMAIL_CREDS_ID: "${JENKINS_EMAIL_CREDS_ID}",
+        BASE_BRANCH: Utils.getGitBranch(this),
+        BASE_AUTHOR: Utils.getGitAuthor(this),
+        MAVEN_SETTINGS_CONFIG_FILE_ID: "${MAVEN_SETTINGS_FILE_ID}",
+    ])
+    KogitoJobTemplate.createPipelineJob(this, jobParams)?.with {
+        parameters {
+            stringParam('DISPLAY_NAME', '', 'Setup a specific build display name')
+            stringParam('GIT_AUTHOR', "${GIT_AUTHOR_NAME}", 'Set the Git author to checkout')
+            stringParam('BUILD_BRANCH_NAME', "${GIT_BRANCH}", 'Set the Git branch to checkout')
+            booleanParam('IS_PR_SOURCE_BRANCH', false, 'Set to true if you are launching the job for a PR source branch')
             booleanParam('SEND_NOTIFICATION', false, 'In case you want the pipeline to send a notification on CI channel for this run.')
         }
     }

@@ -16,11 +16,11 @@
     <dependencies>
         <dependency>
             <groupId>org.kie.kogito</groupId>
-            <artifactId>jobs-service-postgresql</artifactId>
+            <artifactId>jobs-service-postgresql-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.kie.kogito</groupId>
-            <artifactId>quarkus-postgresql-inmemory</artifactId>
+            <groupId>io.quarkiverse.embedded.postgresql</groupId>
+            <artifactId>quarkus-embedded-postgresql</artifactId>
         </dependency>
 
         <dependency>
@@ -67,6 +67,11 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.tomakehurst</groupId>
+            <artifactId>wiremock-jre8</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

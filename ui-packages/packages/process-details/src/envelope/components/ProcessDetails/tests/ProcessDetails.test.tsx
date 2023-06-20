@@ -127,7 +127,9 @@ describe('ProcessDetails tests', () => {
       id: 'a1e139d5-4e77-48c9-84ae-34578e904e5a',
       processDetails: data,
       omittedProcessTimelineEvents: [],
-      showSwfDiagram: true
+      showSwfDiagram: true,
+      singularProcessLabel: 'Workflow',
+      pluralProcessLabel: 'Workflows'
     };
 
     const Jobs: Job[] = [
@@ -161,8 +163,9 @@ describe('ProcessDetails tests', () => {
       (props.driver.getProcessDiagram as jest.Mock).mockImplementationOnce(
         () => svgResults
       );
-      (props.driver
-        .handleProcessVariableUpdate as jest.Mock).mockImplementationOnce(
+      (
+        props.driver.handleProcessVariableUpdate as jest.Mock
+      ).mockImplementationOnce(
         () =>
           new Promise((resolve, reject) => {
             resolve(data.variables);
@@ -201,10 +204,7 @@ describe('ProcessDetails tests', () => {
       });
       wrapper = wrapper.update();
       await act(async () => {
-        wrapper
-          .find('#save-button')
-          .at(1)
-          .simulate('click');
+        wrapper.find('#save-button').at(1).simulate('click');
       });
     });
 
@@ -217,10 +217,7 @@ describe('ProcessDetails tests', () => {
       });
       wrapper = wrapper.update();
       await act(async () => {
-        wrapper
-          .find('#refresh-button')
-          .at(1)
-          .simulate('click');
+        wrapper.find('#refresh-button').at(1).simulate('click');
       });
       expect(props.driver.jobsQuery).toHaveBeenCalled();
     });
@@ -310,7 +307,9 @@ describe('ProcessDetails tests', () => {
       id: 'a1e139d5-4e77-48c9-84ae-34578e904e5a',
       processDetails: data,
       omittedProcessTimelineEvents: [],
-      showSwfDiagram: false
+      showSwfDiagram: false,
+      singularProcessLabel: 'Workflow',
+      pluralProcessLabel: 'Workflows'
     };
 
     const Jobs: Job[] = [
@@ -345,8 +344,9 @@ describe('ProcessDetails tests', () => {
       (props.driver.getProcessDiagram as jest.Mock).mockImplementationOnce(
         () => svgResults
       );
-      (props.driver
-        .handleProcessVariableUpdate as jest.Mock).mockImplementationOnce(
+      (
+        props.driver.handleProcessVariableUpdate as jest.Mock
+      ).mockImplementationOnce(
         () =>
           new Promise((resolve, reject) => {
             resolve(data.variables);
@@ -381,54 +381,25 @@ describe('ProcessDetails tests', () => {
       });
       wrapper = wrapper.update();
       await act(async () => {
-        wrapper
-          .find('Modal')
-          .at(1)
-          .props()
-          ['onClose']();
+        wrapper.find('Modal').at(1).props()['onClose']();
       });
       wrapper = wrapper.update();
 
-      expect(
-        wrapper
-          .find('Modal')
-          .at(1)
-          .props()['isOpen']
-      ).toEqual(true);
+      expect(wrapper.find('Modal').at(1).props()['isOpen']).toEqual(true);
       await act(async () => {
-        wrapper
-          .find('#confirm-button')
-          .at(0)
-          .simulate('click');
+        wrapper.find('#confirm-button').at(0).simulate('click');
       });
       wrapper = wrapper.update();
-      expect(
-        wrapper
-          .find('Modal')
-          .at(1)
-          .props()['isOpen']
-      ).toEqual(false);
+      expect(wrapper.find('Modal').at(1).props()['isOpen']).toEqual(false);
       await act(async () => {
-        wrapper
-          .find('Modal')
-          .at(1)
-          .props()
-          ['onClose']();
+        wrapper.find('Modal').at(1).props()['onClose']();
       });
       wrapper = wrapper.update();
       await act(async () => {
-        wrapper
-          .find('#cancel-button')
-          .at(0)
-          .simulate('click');
+        wrapper.find('#cancel-button').at(0).simulate('click');
       });
       wrapper = wrapper.update();
-      expect(
-        wrapper
-          .find('Modal')
-          .at(1)
-          .props()['isOpen']
-      ).toEqual(false);
+      expect(wrapper.find('Modal').at(1).props()['isOpen']).toEqual(false);
     });
 
     it('Test process variable error modal', async () => {
@@ -440,54 +411,25 @@ describe('ProcessDetails tests', () => {
       });
       wrapper = wrapper.update();
       await act(async () => {
-        wrapper
-          .find('Modal')
-          .at(0)
-          .props()
-          ['onClose']();
+        wrapper.find('Modal').at(0).props()['onClose']();
       });
       wrapper = wrapper.update();
 
-      expect(
-        wrapper
-          .find('Modal')
-          .at(0)
-          .props()['isOpen']
-      ).toEqual(true);
+      expect(wrapper.find('Modal').at(0).props()['isOpen']).toEqual(true);
       await act(async () => {
-        wrapper
-          .find('#retry-button')
-          .at(0)
-          .simulate('click');
+        wrapper.find('#retry-button').at(0).simulate('click');
       });
       wrapper = wrapper.update();
-      expect(
-        wrapper
-          .find('Modal')
-          .at(0)
-          .props()['isOpen']
-      ).toEqual(false);
+      expect(wrapper.find('Modal').at(0).props()['isOpen']).toEqual(false);
       await act(async () => {
-        wrapper
-          .find('Modal')
-          .at(0)
-          .props()
-          ['onClose']();
+        wrapper.find('Modal').at(0).props()['onClose']();
       });
       wrapper = wrapper.update();
       await act(async () => {
-        wrapper
-          .find('#discard-button')
-          .at(0)
-          .simulate('click');
+        wrapper.find('#discard-button').at(0).simulate('click');
       });
       wrapper = wrapper.update();
-      expect(
-        wrapper
-          .find('Modal')
-          .at(0)
-          .props()['isOpen']
-      ).toEqual(false);
+      expect(wrapper.find('Modal').at(0).props()['isOpen']).toEqual(false);
     });
   });
 });

@@ -57,57 +57,45 @@ describe('Process list actions kebab tests', () => {
   };
   it('Skip click test', () => {
     let wrapper = mount(<ProcessListActionsKebab {...props} />);
-    wrapper
-      .find(Dropdown)
-      .find(KebabToggle)
-      .find('button')
-      .simulate('click');
+    wrapper.find(Dropdown).find(KebabToggle).find('button').simulate('click');
     wrapper = wrapper.update();
     expect(
-      wrapper
-        .find(DropdownItem)
-        .at(1)
-        .find('a')
-        .children()
-        .contains('Skip')
+      wrapper.find(DropdownItem).at(1).find('a').children().contains('Skip')
     ).toBeTruthy();
-    wrapper
-      .find(DropdownItem)
-      .at(1)
-      .simulate('click');
+    wrapper.find(DropdownItem).at(1).simulate('click');
     expect(props.onSkipClick).toHaveBeenCalled();
   });
 
   it('Retry click test', () => {
     let wrapper = mount(<ProcessListActionsKebab {...props} />);
-    wrapper
-      .find(Dropdown)
-      .find(KebabToggle)
-      .find('button')
-      .simulate('click');
+    wrapper.find(Dropdown).find(KebabToggle).find('button').simulate('click');
     wrapper = wrapper.update();
     expect(
-      wrapper
-        .find(DropdownItem)
-        .at(0)
-        .find('a')
-        .children()
-        .contains('Retry')
+      wrapper.find(DropdownItem).at(0).find('a').children().contains('Retry')
     ).toBeTruthy();
-    wrapper
-      .find(DropdownItem)
-      .at(0)
-      .simulate('click');
+    wrapper.find(DropdownItem).at(0).simulate('click');
     expect(props.onRetryClick).toHaveBeenCalled();
   });
 
   it('Abort click test', () => {
     let wrapper = mount(<ProcessListActionsKebab {...props} />);
-    wrapper
-      .find(Dropdown)
-      .find(KebabToggle)
-      .find('button')
-      .simulate('click');
+    wrapper.find(Dropdown).find(KebabToggle).find('button').simulate('click');
+    wrapper = wrapper.update();
+    expect(
+      wrapper.find(DropdownItem).at(2).find('a').children().contains('Abort')
+    ).toBeTruthy();
+    wrapper.find(DropdownItem).at(2).simulate('click');
+    expect(props.onAbortClick).toHaveBeenCalled();
+  });
+  it('Trigger CloudEvent click test', () => {
+    const onOpenTriggerCloudEvent = jest.fn();
+    let wrapper = mount(
+      <ProcessListActionsKebab
+        {...props}
+        onOpenTriggerCloudEvent={onOpenTriggerCloudEvent}
+      />
+    );
+    wrapper.find(Dropdown).find(KebabToggle).find('button').simulate('click');
     wrapper = wrapper.update();
     expect(
       wrapper
@@ -115,14 +103,12 @@ describe('Process list actions kebab tests', () => {
         .at(2)
         .find('a')
         .children()
-        .contains('Abort')
+        .contains('Send Cloud Event')
     ).toBeTruthy();
-    wrapper
-      .find(DropdownItem)
-      .at(2)
-      .simulate('click');
-    expect(props.onAbortClick).toHaveBeenCalled();
+    wrapper.find(DropdownItem).at(2).simulate('click');
+    expect(onOpenTriggerCloudEvent).toHaveBeenCalled();
   });
+
   it('process instance in active state', () => {
     let wrapper = mount(
       <ProcessListActionsKebab
@@ -135,25 +121,13 @@ describe('Process list actions kebab tests', () => {
         }}
       />
     );
-    wrapper
-      .find(Dropdown)
-      .find(KebabToggle)
-      .find('button')
-      .simulate('click');
+    wrapper.find(Dropdown).find(KebabToggle).find('button').simulate('click');
     wrapper = wrapper.update();
     expect(wrapper.find(DropdownItem).length).toEqual(1);
     expect(
-      wrapper
-        .find(DropdownItem)
-        .at(0)
-        .find('a')
-        .children()
-        .contains('Abort')
+      wrapper.find(DropdownItem).at(0).find('a').children().contains('Abort')
     ).toBeTruthy();
-    wrapper
-      .find(DropdownItem)
-      .at(0)
-      .simulate('click');
+    wrapper.find(DropdownItem).at(0).simulate('click');
     expect(props.onAbortClick).toHaveBeenCalled();
   });
 });

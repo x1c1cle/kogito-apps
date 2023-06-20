@@ -28,7 +28,8 @@ import {
 } from '../api';
 
 export default class ProcessListEnvelopeViewDriver
-  implements ProcessListDriver {
+  implements ProcessListDriver
+{
   constructor(
     private readonly channelApi: MessageBusClientApi<ProcessListChannelApi>
   ) {}
@@ -77,5 +78,9 @@ export default class ProcessListEnvelopeViewDriver
     return this.channelApi.requests.processList__getChildProcessesQuery(
       rootProcessInstanceId
     );
+  }
+
+  openTriggerCloudEvent(processInstance?: ProcessInstance): void {
+    this.channelApi.notifications.processList__openTriggerCloudEvent(processInstance);
   }
 }

@@ -51,6 +51,8 @@ interface ProcessListProps {
   initialState: ProcessListState;
   singularProcessLabel: string;
   pluralProcessLabel: string;
+  isWorkflow: boolean;
+  isTriggerCloudEventEnabled?: boolean;
 }
 const ProcessList: React.FC<ProcessListProps & OUIAProps> = ({
   driver,
@@ -58,6 +60,8 @@ const ProcessList: React.FC<ProcessListProps & OUIAProps> = ({
   initialState,
   singularProcessLabel,
   pluralProcessLabel,
+  isTriggerCloudEventEnabled = false,
+  isWorkflow,
   ouiaId,
   ouiaSafe
 }) => {
@@ -90,9 +94,8 @@ const ProcessList: React.FC<ProcessListProps & OUIAProps> = ({
   );
   const [error, setError] = useState<string>(undefined);
   const [filters, setFilters] = useState<ProcessInstanceFilter>(defaultFilters);
-  const [processStates, setProcessStates] = useState<ProcessInstanceState[]>(
-    defaultStatusFilter
-  );
+  const [processStates, setProcessStates] =
+    useState<ProcessInstanceState[]>(defaultStatusFilter);
   const [expanded, setExpanded] = React.useState<{ [key: number]: boolean }>(
     {}
   );
@@ -135,7 +138,7 @@ const ProcessList: React.FC<ProcessListProps & OUIAProps> = ({
         processInstance.serviceUrl &&
         processInstance.addons.includes('process-management')
       ) {
-        setSelectableInstances(prev => prev + 1);
+        setSelectableInstances((prev) => prev + 1);
       }
     });
   };
@@ -165,7 +168,7 @@ const ProcessList: React.FC<ProcessListProps & OUIAProps> = ({
         setOffset(_offset);
       }
     } catch (err) {
-      setError(err);
+      setError(err.errorMessage);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -256,6 +259,10 @@ const ProcessList: React.FC<ProcessListProps & OUIAProps> = ({
         setIsAllChecked={setIsAllChecked}
         driver={driver}
         defaultStatusFilter={defaultStatusFilter}
+        singularProcessLabel={singularProcessLabel}
+        pluralProcessLabel={pluralProcessLabel}
+        isWorkflow={isWorkflow}
+        isTriggerCloudEventEnabled={isTriggerCloudEventEnabled}
       />
       {filters.status.length > 0 ? (
         <>
@@ -275,6 +282,7 @@ const ProcessList: React.FC<ProcessListProps & OUIAProps> = ({
             setIsAllChecked={setIsAllChecked}
             singularProcessLabel={singularProcessLabel}
             pluralProcessLabel={pluralProcessLabel}
+            isTriggerCloudEventEnabled={isTriggerCloudEventEnabled}
           />
           {mustShowLoadMore && (
             <LoadMore

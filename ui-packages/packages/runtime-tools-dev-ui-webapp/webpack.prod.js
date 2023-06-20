@@ -2,7 +2,6 @@ const path = require('path');
 const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = merge(common, {
@@ -13,7 +12,7 @@ module.exports = merge(common, {
     publicPath: "./webapp/"
   },
   optimization: {
-    minimizer: [new OptimizeCSSAssetsPlugin({})]
+    minimize: true
   },
   plugins: [
     new MiniCssExtractPlugin({
@@ -82,6 +81,9 @@ module.exports = merge(common, {
           ),
           path.resolve(
             '../../node_modules/@kogito-apps/workflow-form/dist/envelope/styles.css'
+          ),
+          path.resolve(
+              '../../node_modules/@kogito-apps/cloud-event-form/dist/envelope/styles.css'
           ),
           path.resolve(
             '../../node_modules/@kogito-apps/process-definition-list/dist/envelope/styles.css'

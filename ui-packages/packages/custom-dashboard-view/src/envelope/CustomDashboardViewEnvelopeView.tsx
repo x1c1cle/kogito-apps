@@ -22,7 +22,7 @@ import CustomDashboardViewEnvelopeViewDriver from './CustomDashboardViewEnvelope
 import '@patternfly/patternfly/patternfly.css';
 
 export interface CustomDashboardViewEnvelopeViewApi {
-  initialize: (dashboardName: string) => void;
+  initialize: (dashboardName: string, targetOrigin: string) => void;
 }
 
 interface Props {
@@ -33,19 +33,19 @@ export const CustomDashboardViewEnvelopeView = React.forwardRef<
   CustomDashboardViewEnvelopeViewApi,
   Props
 >((props, forwardedRef) => {
-  const [
-    isEnvelopeConnectedToChannel,
-    setEnvelopeConnectedToChannel
-  ] = useState<boolean>(false);
+  const [isEnvelopeConnectedToChannel, setEnvelopeConnectedToChannel] =
+    useState<boolean>(false);
 
   const [customDashboardName, setCustomDashboardName] = useState<string>();
+  const [targetOrigin, setTargetOrigin] = useState<string>();
 
   useImperativeHandle(
     forwardedRef,
     () => ({
-      initialize: (dashboardName: string) => {
+      initialize: (dashboardName: string, targetOrigin: string) => {
         setEnvelopeConnectedToChannel(true);
         setCustomDashboardName(dashboardName);
+        setTargetOrigin(targetOrigin);
       }
     }),
     []
@@ -57,6 +57,7 @@ export const CustomDashboardViewEnvelopeView = React.forwardRef<
           isEnvelopeConnectedToChannel={isEnvelopeConnectedToChannel}
           driver={new CustomDashboardViewEnvelopeViewDriver(props.channelApi)}
           customDashboardName={customDashboardName}
+          targetOrigin={targetOrigin}
         />
       )}
     </>

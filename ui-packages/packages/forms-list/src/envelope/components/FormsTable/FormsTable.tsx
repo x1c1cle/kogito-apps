@@ -71,25 +71,28 @@ const FormsTable: React.FC<FormsTableProps & OUIAProps> = ({
 
   const getSortBy = (): ISortBy => {
     return {
-      index: columns.findIndex(column => column.path === sortBy.property),
+      index: columns.findIndex((column) => column.path === sortBy.property),
       direction: sortBy.direction
     };
   };
 
-  const onSort = async (index: number, direction): Promise<void> => {
+  const onSort = async (
+    index: number,
+    direction: 'asc' | 'desc'
+  ): Promise<void> => {
     const sortObj: SortBy = {
       property: columns[index].path,
-      direction: direction.toLowerCase()
+      direction: direction
     };
 
     const sortedData = _.orderBy(
       formsData,
       _.keys({
         [sortObj.property]: sortObj.direction
-      }).map(key => key),
+      }),
       _.values({
         [sortObj.property]: sortObj.direction
-      }).map(value => value.toLowerCase())
+      })
     );
     setFormsData(sortedData);
     setSortBy(sortObj);

@@ -28,31 +28,24 @@ describe('EmbeddedWorkflowFormChannelApiImpl tests', () => {
     api = new EmbeddedWorkflowFormChannelApiImpl(driver);
   });
 
-  it('WorkflowForm__doSubmit', () => {
-    const formJSON = {
-      something: 'something'
-    };
-    api.workflowForm__startWorkflowCloudEvent(formJSON);
-
-    expect(driver.startWorkflowCloudEvent).toHaveBeenCalledWith(formJSON);
-  });
-
   it('WorkflowForm__getCustomWorkflowSchema', () => {
-
     api.workflowForm__getCustomWorkflowSchema();
 
     expect(driver.getCustomWorkflowSchema).toHaveBeenCalled();
   });
 
   it('WorkflowForm__startWorkflowRest', () => {
+    api.workflowForm__startWorkflow('http://localhost:8080/test', {
+      name: 'John'
+    });
 
-    api.workflowForm__startWorkflowRest({name:'John'}, 'http://localhost:8080/test');
-
-    expect(driver.startWorkflowRest).toHaveBeenCalledWith({name:'John'}, 'http://localhost:8080/test');
+    expect(driver.startWorkflow).toHaveBeenCalledWith(
+      'http://localhost:8080/test',
+      { name: 'John' }
+    );
   });
 
   it('WorkflowForm__resetBusinessKey', () => {
-
     api.workflowForm__resetBusinessKey();
 
     expect(driver.resetBusinessKey).toHaveBeenCalled();

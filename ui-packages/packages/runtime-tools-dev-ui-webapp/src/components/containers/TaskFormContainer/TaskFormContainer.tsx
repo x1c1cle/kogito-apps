@@ -36,23 +36,23 @@ const TaskFormContainer: React.FC<Props & OUIAProps> = ({
   ouiaSafe
 }) => {
   const gatewayApi = useTaskFormGatewayApi();
-  const context = useDevUIAppContext();
+  const appContext = useDevUIAppContext();
 
   return (
     <EmbeddedTaskForm
       {...componentOuiaProps(ouiaId, 'task-form-container', ouiaSafe)}
       userTask={userTask}
-      user={context.getCurrentUser()}
+      user={appContext.getCurrentUser()}
       driver={{
         doSubmit(phase?: string, payload?: any): Promise<any> {
           return new Promise<any>((resolve, reject) => {
             gatewayApi
               .doSubmit(userTask, phase, payload)
-              .then(response => {
+              .then((response) => {
                 onSubmitSuccess(phase);
                 resolve(response);
               })
-              .catch(error => {
+              .catch((error) => {
                 const message = error.response
                   ? error.response.data
                   : error.message;
@@ -68,7 +68,7 @@ const TaskFormContainer: React.FC<Props & OUIAProps> = ({
           return gatewayApi.getCustomForm(userTask);
         }
       }}
-      targetOrigin={'*'}
+      targetOrigin={appContext.getDevUIUrl()}
     />
   );
 };

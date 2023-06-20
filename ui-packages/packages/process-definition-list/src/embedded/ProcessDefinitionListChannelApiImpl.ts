@@ -24,7 +24,8 @@ import {
  * Implementation of the ProcessDefinitionListChannelApiImpl delegating to a ProcessDefinitionListDriver
  */
 export class ProcessDefinitionListChannelApiImpl
-  implements ProcessDefinitionListChannelApi {
+  implements ProcessDefinitionListChannelApi
+{
   constructor(private readonly driver: ProcessDefinitionListDriver) {}
   processDefinitionList__openProcessForm(
     processDefinition: ProcessDefinition
@@ -45,5 +46,9 @@ export class ProcessDefinitionListChannelApiImpl
     ProcessDefinition[]
   > {
     return this.driver.getProcessDefinitionsQuery();
+  }
+
+  processDefinitionsList__openTriggerCloudEvent(): void {
+    this.driver.openTriggerCloudEvent();
   }
 }

@@ -30,6 +30,7 @@ export interface Props {
   targetOrigin: string;
   driver: ProcessDefinitionListDriver;
   singularProcessLabel: string;
+  isTriggerCloudEventEnabled?: boolean;
 }
 
 export const EmbeddedProcessDefinitionList = React.forwardRef<
@@ -52,7 +53,7 @@ export const EmbeddedProcessDefinitionList = React.forwardRef<
         container: container(),
         bus: {
           postMessage(message, targetOrigin, transfer) {
-            window.postMessage(message, '*', transfer);
+            window.postMessage(message, targetOrigin, transfer);
           }
         }
       });
@@ -62,7 +63,8 @@ export const EmbeddedProcessDefinitionList = React.forwardRef<
           envelopeServerId: envelopeServer.id
         },
         {
-          singularProcessLabel: props.singularProcessLabel
+          singularProcessLabel: props.singularProcessLabel,
+          isTriggerCloudEventEnabled: props.isTriggerCloudEventEnabled
         }
       );
     },

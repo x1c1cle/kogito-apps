@@ -42,12 +42,13 @@ describe('DevUILayout tests', () => {
         singularProcessLabel: 'Workflow',
         pluralProcessLabel: 'Workflows'
       },
-      isStunnerEnabled:false
+      isStunnerEnabled: false
     };
     const wrapper = mount(
       <DevUILayout {...props}>
         <MemoryRouter initialEntries={['/']} keyLength={0}>
           <DevUIRoutes
+            dataIndexUrl={'http://localhost:8180'}
             trustyServiceUrl={'http://localhost:8081'}
             navigate={'JobsManagement'}
           />
@@ -86,12 +87,13 @@ describe('DevUILayout tests', () => {
         singularProcessLabel: 'Workflow',
         pluralProcessLabel: 'Workflows'
       },
-      isStunnerEnabled:false
+      isStunnerEnabled: false
     };
     const wrapper = mount(
       <DevUILayout {...props}>
         <MemoryRouter initialEntries={['/']} keyLength={0}>
           <DevUIRoutes
+            dataIndexUrl={'http://localhost:8180'}
             trustyServiceUrl={'http://localhost:8081'}
             navigate={'JobsManagement'}
           />
@@ -130,12 +132,13 @@ describe('DevUILayout tests', () => {
         singularProcessLabel: 'Workflow',
         pluralProcessLabel: 'Workflows'
       },
-      isStunnerEnabled:false
+      isStunnerEnabled: false
     };
     const wrapper = mount(
       <DevUILayout {...props}>
         <MemoryRouter initialEntries={['/']} keyLength={0}>
           <DevUIRoutes
+            dataIndexUrl={'http://localhost:8180'}
             trustyServiceUrl={'http://localhost:8081'}
             navigate={'JobsManagement'}
           />

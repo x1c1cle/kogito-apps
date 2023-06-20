@@ -43,8 +43,9 @@ interface SortBy {
   direction: 'asc' | 'desc';
 }
 
-const CustomDashboardsTable: React.FC<CustomDashboardTableProps &
-  OUIAProps> = ({
+const CustomDashboardsTable: React.FC<
+  CustomDashboardTableProps & OUIAProps
+> = ({
   driver,
   customDashboardData,
   setDashboardsData,
@@ -73,25 +74,28 @@ const CustomDashboardsTable: React.FC<CustomDashboardTableProps &
 
   const getSortBy = (): ISortBy => {
     return {
-      index: columns.findIndex(column => column.path === sortBy.property),
+      index: columns.findIndex((column) => column.path === sortBy.property),
       direction: sortBy.direction
     };
   };
 
-  const onSort = async (index: number, direction): Promise<void> => {
+  const onSort = async (
+    index: number,
+    direction: 'asc' | 'desc'
+  ): Promise<void> => {
     const sortObj: SortBy = {
       property: columns[index - 1].path,
-      direction: direction.toLowerCase()
+      direction: direction
     };
 
     const sortedData = _.orderBy(
       customDashboardData,
       _.keys({
         [sortObj.property]: sortObj.direction
-      }).map(key => key),
+      }),
       _.values({
         [sortObj.property]: sortObj.direction
-      }).map(value => value.toLowerCase())
+      })
     );
     setDashboardsData(sortedData);
     setSortBy(sortObj);

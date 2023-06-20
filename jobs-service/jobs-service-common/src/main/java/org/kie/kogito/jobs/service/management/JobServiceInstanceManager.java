@@ -86,20 +86,20 @@ public class JobServiceInstanceManager {
         //background task for leader check, it will be started after the first tryBecomeLeader() execution
         checkLeader = vertx.periodicStream(TimeUnit.SECONDS.toMillis(leaderCheckIntervalInSeconds))
                 .handler(id -> tryBecomeLeader(currentInfo.get(), checkLeader, heartbeat)
-                        .subscribe().with(i -> LOGGER.info("Checking Leader"),
+                        .subscribe().with(i -> LOGGER.trace("Leader check completed"),
                                 ex -> LOGGER.error("Error checking Leader", ex)))
                 .pause();
 
         //background task for heartbeat will be started when become leader
         heartbeat = vertx.periodicStream(TimeUnit.SECONDS.toMillis(heardBeatIntervalInSeconds))
                 .handler(t -> heartbeat(currentInfo.get())
-                        .subscribe().with(i -> LOGGER.info("Heartbeat {}", currentInfo.get()),
+                        .subscribe().with(i -> LOGGER.trace("Heartbeat completed {}", currentInfo.get()),
                                 ex -> LOGGER.error("Error on heartbeat {}", currentInfo.get(), ex)))
                 .pause();
 
         //initial leader check
         tryBecomeLeader(currentInfo.get(), checkLeader, heartbeat)
-                .subscribe().with(i -> LOGGER.info("Initial check leader execution"),
+                .subscribe().with(i -> LOGGER.info("Initial leader check completed"),
                         ex -> LOGGER.error("Error on initial check leader", ex));
     }
 
@@ -120,10 +120,18 @@ public class JobServiceInstanceManager {
         //enable producing events
         messagingChangeEventEvent.fire(new MessagingChangeEvent(true));
 
-        LOGGER.warn("Enabled communication for leader instance");
+        LOGGER.info("Enabled communication for leader instance");
     }
 
-    void onShutdown(@Observes ShutdownEvent shutdownEvent) {
+    void onShutdown(@Observes ShutdownEvent event) {
+        shutdown();
+    }
+
+    void onReleaseLeader(@Observes ReleaseLeaderEvent event) {
+        shutdown();
+    }
+
+    private void shutdown() {
         release(currentInfo.get())
                 .onItem().invoke(i -> checkLeader.cancel())
                 .onItem().invoke(i -> heartbeat.cancel())
@@ -166,6 +174,7 @@ public class JobServiceInstanceManager {
 
     protected Uni<Void> release(JobServiceManagementInfo info) {
         return repository.set(new JobServiceManagementInfo(info.getId(), null, null))
+                .onItem().invoke(this::disableCommunication)
                 .onItem().invoke(i -> leader.set(false))
                 .onItem().invoke(i -> LOGGER.info("Leader instance released"))
                 .onFailure().invoke(ex -> LOGGER.error("Error releasing leader"))
@@ -173,7 +182,6 @@ public class JobServiceInstanceManager {
     }
 
     protected Uni<JobServiceManagementInfo> heartbeat(JobServiceManagementInfo info) {
-        LOGGER.debug("Heartbeat Leader");
         if (isLeader()) {
             return repository.heartbeat(info);
         }

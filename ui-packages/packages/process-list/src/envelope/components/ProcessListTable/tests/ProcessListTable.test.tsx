@@ -18,7 +18,7 @@ import { act } from 'react-dom/test-utils';
 import { ProcessInstances } from './mocks/Mocks';
 import { OrderBy } from '../../.././../api';
 import { mount } from 'enzyme';
-import ProcessListTable from '../ProcessListTable';
+import ProcessListTable, { ProcessListTableProps } from '../ProcessListTable';
 import { Button, Checkbox } from '@patternfly/react-core';
 import _ from 'lodash';
 import axios from 'axios';
@@ -62,7 +62,7 @@ jest.mock('@kogito-apps/management-console-shared', () =>
   })
 );
 
-const props = {
+const props: ProcessListTableProps = {
   processInstances: ProcessInstances,
   isLoading: false,
   expanded: {
@@ -112,11 +112,7 @@ describe('ProcessListTable test', () => {
       <ProcessListTable {...{ ...props, expanded: { 0: true } }} />
     ).find('ProcessListTable');
     await act(async () => {
-      wrapper
-        .find('td')
-        .at(0)
-        .find(Button)
-        .simulate('click');
+      wrapper.find('td').at(0).find(Button).simulate('click');
     });
     wrapper = wrapper.update();
     expect(wrapper.find('MockedProcessListChildTable').exists()).toBeTruthy();
@@ -137,11 +133,7 @@ describe('ProcessListTable test', () => {
       </BrowserRouter>
     ).find('ProcessListTable');
     await act(async () => {
-      wrapper
-        .find('CollapseColumn')
-        .at(0)
-        .find(Button)
-        .simulate('click');
+      wrapper.find('CollapseColumn').at(0).find(Button).simulate('click');
     });
     const ProcessListChildTable = wrapper
       .update()
@@ -201,7 +193,7 @@ describe('ProcessListTable test', () => {
       expect(skipSuccessWrapper.find('ProcessInfoModal').exists()).toBeTruthy();
       expect(
         skipSuccessWrapper.find('ProcessInfoModal').props()['modalContent']
-      ).toEqual('The process travels was successfully skipped.');
+      ).toEqual('The workflow travels was successfully skipped.');
     });
   });
 
@@ -226,7 +218,7 @@ describe('ProcessListTable test', () => {
       ).toBeTruthy();
       expect(
         retrySuccessWrapper.find('ProcessInfoModal').props()['modalContent']
-      ).toEqual('The process travels was successfully re-executed.');
+      ).toEqual('The workflow travels was successfully re-executed.');
     });
   });
 
@@ -251,7 +243,7 @@ describe('ProcessListTable test', () => {
       ).toBeTruthy();
       expect(
         abortSuccessWrapper.find('ProcessInfoModal').props()['modalContent']
-      ).toEqual('The process travels was successfully aborted.');
+      ).toEqual('The workflow travels was successfully aborted.');
     });
   });
 });

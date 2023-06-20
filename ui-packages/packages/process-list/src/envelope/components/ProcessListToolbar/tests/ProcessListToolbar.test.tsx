@@ -53,11 +53,16 @@ const props = {
   isAllChecked: false,
   setIsAllChecked: jest.fn(),
   driver: null,
-  defaultStatusFilter: [ProcessInstanceState.Active]
+  defaultStatusFilter: [ProcessInstanceState.Active],
+  singularProcessLabel: 'Workflow',
+  pluralProcessLabel: 'Workflows',
+  isWorkflow: true,
+  isTriggerCloudEventEnabled: false
 };
 beforeEach(() => {
   props.setProcessStates.mockClear();
   props.setFilters.mockClear();
+  props.isTriggerCloudEventEnabled = false;
 });
 
 describe('ProcessListToolbar test', () => {
@@ -68,34 +73,36 @@ describe('ProcessListToolbar test', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
+  it('Snapshot tests with trigger cloud event', () => {
+    props.isTriggerCloudEventEnabled = true;
+    const wrapper = mount(<ProcessListToolbar {...props} />).find(
+      'ProcessListToolbar'
+    );
+    expect(wrapper).toMatchSnapshot();
+
+    const triggerButton = wrapper.findWhere((child) =>
+      child.text().includes('Trigger Cloud Event')
+    );
+    expect(triggerButton).not.toBeNull();
+  });
+
   it('on select status', async () => {
     let wrapper = mount(<ProcessListToolbar {...props} />).find(
       'ProcessListToolbar'
     );
     await act(async () => {
-      wrapper
-        .find(Select)
-        .find('button')
-        .simulate('click');
+      wrapper.find(Select).find('button').simulate('click');
     });
     wrapper = wrapper.update();
     await act(async () => {
-      wrapper
-        .find(SelectOption)
-        .at(1)
-        .find('input')
-        .simulate('change');
+      wrapper.find(SelectOption).at(1).find('input').simulate('change');
     });
     expect(props.setProcessStates.mock.calls[0][0]).toStrictEqual([
       'ACTIVE',
       'COMPLETED'
     ]);
     await act(async () => {
-      wrapper
-        .find(SelectOption)
-        .at(0)
-        .find('input')
-        .simulate('change');
+      wrapper.find(SelectOption).at(0).find('input').simulate('change');
     });
     wrapper = wrapper.update();
     expect(props.setProcessStates).toHaveBeenCalled();
@@ -153,10 +160,7 @@ describe('ProcessListToolbar test', () => {
     const wrapper = mount(<ProcessListToolbar {...props} />).find(
       'ProcessListToolbar'
     );
-    wrapper
-      .find(Toolbar)
-      .props()
-      ['clearAllFilters']();
+    wrapper.find(Toolbar).props()['clearAllFilters']();
     expect(props.setProcessStates.mock.calls[0][0]).toEqual(['ACTIVE']);
     expect(props.setFilters.mock.calls[0][0]).toEqual({
       status: ['ACTIVE'],
@@ -168,10 +172,7 @@ describe('ProcessListToolbar test', () => {
     const wrapper = mount(<ProcessListToolbar {...props} />).find(
       'ProcessListToolbar'
     );
-    wrapper
-      .find('#apply-filter-button')
-      .at(1)
-      .simulate('click');
+    wrapper.find('#apply-filter-button').at(1).simulate('click');
     expect(props.setFilters).toHaveBeenCalled();
     expect(props.setFilters.mock.calls[0][0]).toStrictEqual({
       status: ['ACTIVE'],
@@ -418,10 +419,7 @@ describe('ProcessListToolbar test', () => {
     const wrapper = mount(<ProcessListToolbar {...props} />).find(
       'ProcessListToolbar'
     );
-    wrapper
-      .find('ProcessInfoModal')
-      .props()
-      ['resetSelected']();
+    wrapper.find('ProcessInfoModal').props()['resetSelected']();
     expect(props.setSelectedInstances).toHaveBeenCalled();
     expect(props.setIsAllChecked).toHaveBeenCalled();
   });

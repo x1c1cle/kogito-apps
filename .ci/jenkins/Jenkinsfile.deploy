@@ -8,7 +8,7 @@ deployProperties = [:]
 
 pipeline {
     agent {
-        label 'kie-rhel7 && kie-mem16g && !built-in'
+        label 'kie-rhel8 && docker && kie-mem16g && !built-in'
     }
 
     tools {
@@ -32,6 +32,7 @@ pipeline {
 
         // Keep here for visitibility
         MAVEN_OPTS = '-Xms1024m -Xmx4g'
+        NODE_OPTIONS = '--max_old_space_size=4096'
 
         BOT_BRANCH_HASH = "${util.generateHash(10)}"
         MAVEN_DEPLOY_LOCAL_DIR = "${WORKSPACE}/maven_deploy_dir"
@@ -58,6 +59,8 @@ pipeline {
                     }
 
                     checkoutRepo()
+
+                    setupCypressEnv('9.7.0')
                 }
             }
             post {
@@ -186,6 +189,12 @@ pipeline {
     }
 }
 
+void setupCypressEnv(String cypressVersion) {
+    if (env.CYPRESS_BINARY_URL) {
+        env.CYPRESS_INSTALL_BINARY = "${CYPRESS_BINARY_URL}/cypress-${cypressVersion}.zip"
+    }
+}
+
 void sendNotification() {
     if (params.SEND_NOTIFICATION) {
         mailer.sendMarkdownTestSummaryNotification('Deploy', "[${getBuildBranch()}] Kogito Apps", [env.KOGITO_CI_EMAIL_TO])
@@ -224,7 +233,7 @@ void commitAndCreatePR() {
     dir(getRepoName()) {
         githubscm.commitChanges(commitMsg, { githubscm.findAndStageNotIgnoredFiles('pom.xml') })
         githubscm.pushObject('origin', getBotBranch(), getBotAuthorCredsID())
-        deployProperties["${getRepoName()}.pr.link"] = githubscm.createPR(commitMsg, prBody, getBuildBranch(), getBotAuthorCredsID())
+        deployProperties["${getRepoName()}.pr.link"] = githubscm.createPRWithLabels(commitMsg, prBody, getBuildBranch(), ['skip-ci'] as String[], getBotAuthorCredsID()) 
     }
 }
 

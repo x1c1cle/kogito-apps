@@ -35,18 +35,21 @@ interface ProcessDefinitionListToolbarProps {
   setFilterProcessNames: React.Dispatch<React.SetStateAction<string[]>>;
   applyFilter: () => void;
   singularProcessLabel: string;
+  onOpenTriggerCloudEvent?: () => void;
 }
 
 enum Category {
   PROCESS_NAME = 'Process name'
 }
 
-const ProcessDefinitionListToolbar: React.FC<ProcessDefinitionListToolbarProps &
-  OUIAProps> = ({
+const ProcessDefinitionListToolbar: React.FC<
+  ProcessDefinitionListToolbarProps & OUIAProps
+> = ({
   applyFilter,
   filterProcessNames,
   setFilterProcessNames,
   singularProcessLabel,
+  onOpenTriggerCloudEvent,
   ouiaSafe,
   ouiaId
 }) => {
@@ -135,6 +138,20 @@ const ProcessDefinitionListToolbar: React.FC<ProcessDefinitionListToolbarProps &
           </Tooltip>
         </ToolbarItem>
       </ToolbarGroup>
+      {onOpenTriggerCloudEvent && (
+        <ToolbarGroup>
+          <ToolbarItem variant="separator" />
+          <ToolbarItem>
+            <Button
+              variant="primary"
+              key={'triggerCloudEventButton'}
+              onClick={() => onOpenTriggerCloudEvent()}
+            >
+              Trigger Cloud Event
+            </Button>
+          </ToolbarItem>
+        </ToolbarGroup>
+      )}
     </React.Fragment>
   );
 
